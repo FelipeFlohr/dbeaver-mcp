@@ -21,8 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(MockitoExtension.class)
 @SpringBootTest
 class DBeaverCipherServiceTest {
-    private static final String DEFAULT_KEY = "babb4a9f774ab853c96c2d653dfe544a";
-    private static final String DEFAULT_IV = "00000000000000000000000000000000";
 
     @Autowired
     private DBeaverCipherService service;
@@ -62,6 +60,7 @@ class DBeaverCipherServiceTest {
         assertEquals("admin", withSshData.getConnection().getUser());
         assertNull(withSshData.getConnection().getPassword());
         assertNull(withSshData.getConnection().getOracleLogonAs());
+        assertNotNull(withoutSshData.getSshTunnel());
         assertEquals("username", withSshData.getSshTunnel().getUser());
         assertEquals("password", withSshData.getSshTunnel().getPassword());
 

@@ -38,10 +38,10 @@ public class QueryMCPService {
                     "Returns the result sets as a list of rows (maps of column name to value) for each statement that produces results."
     )
     public List<StatementResponseDTO> executeReadOnlyQuery(
-            @McpToolParam(description = "The name of the database connection to execute the query against", required = true)
+            @McpToolParam(description = "The name of the database connection to execute the query against")
             String connectionName,
 
-            @McpToolParam(description = "List of SQL statements to execute (SELECT-like queries only)", required = true)
+            @McpToolParam(description = "List of SQL statements to execute (SELECT-like queries only)")
             List<String> statements
     ) throws DBeaverMCPValidationException {
         QueryService queryService = queryServiceFactory.getFromConnectionName(connectionName);
