@@ -1,6 +1,8 @@
 package dev.felipeflohr.dbeavermcp.module.query.service;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
+import dev.felipeflohr.dbeavermcp.module.connection.enumeration.DatabaseType;
+import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionPoolManager;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverCipherService;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverDataSourceService;
 import dev.felipeflohr.dbeavermcp.module.query.factory.QueryServiceFactory;
@@ -8,9 +10,11 @@ import dev.felipeflohr.dbeavermcp.module.query.model.StatementResponseDTO;
 import dev.felipeflohr.dbeavermcp.test.AssertionUtil;
 import dev.felipeflohr.dbeavermcp.test.TestcontainersConfiguration;
 import dev.felipeflohr.dbeavermcp.test.TestcontainersService;
+import org.jspecify.annotations.NullMarked;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -23,28 +27,20 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@NullMarked
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
-class QueryServiceTest {
+abstract class BaseQueryServiceTest {
     @Autowired
     private QueryServiceFactory queryServiceFactory;
 
     @Autowired
-    @Qualifier("postgresQueryServiceImpl")
-    private QueryService postgresQueryService;
-
-    @Autowired
-    @Qualifier("oracleQueryServiceImpl")
-    private QueryService oracleQueryService;
-
-    @Autowired
-    @Qualifier("firebirdQueryServiceImpl")
-    private QueryService firebirdQueryService;
-
-    @Autowired
     private TestcontainersService testcontainersService;
+
+    @Autowired
+    private ConnectionPoolManager connectionPoolManager;
 
     @MockitoBean
     private DBeaverDataSourceService mockedDBeaverDataSourceService;
@@ -61,76 +57,51 @@ class QueryServiceTest {
     @Value("classpath:scripts/parent-and-child-test-firebird.sql")
     private Resource parentAndChildTestFirebird;
 
-    @Test
-    void queryPostgres() throws SQLException, DBeaverMCPValidationException {
+    @BeforeEach
+    void beforeEach() throws DBeaverMCPValidationException, SQLException {
         testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        testcontainersService.clearPostgresContainer();
-        testcontainersService.executePostgresScript(parentAndChildTestPostgres);
-        assertParentAndChildTest(TestcontainersConfiguration.POSTGRES_CONNECTION_NAME, false);
+        DatabaseType databaseType = connectionPoolManager.getDatabaseTypeFromConnectionName(getConnectionName());
+        switch (databaseType) {
+            case POSTGRES:
+                testcontainersService.executePostgresScript(parentAndChildTestPostgres);
+                break;
+            case ORACLE:
+                testcontainersService.executeOracleScript(parentAndChildTestOracle);
+                break;
+            case FIREBIRD:
+                testcontainersService.executeFirebirdScript(parentAndChildTestFirebird);
+                break;
+        }
+    }
+
+    @AfterEach
+    void afterEach() throws DBeaverMCPValidationException, SQLException {
+        DatabaseType databaseType = connectionPoolManager.getDatabaseTypeFromConnectionName(getConnectionName());
+        switch (databaseType) {
+            case POSTGRES:
+                testcontainersService.clearPostgresContainer();
+                break;
+            case ORACLE:
+                testcontainersService.clearOracleContainer();
+                break;
+            case FIREBIRD:
+                testcontainersService.clearFirebirdContainer();
+                break;
+        }
     }
 
     @Test
-    void queryOracle() throws SQLException, DBeaverMCPValidationException {
-        testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        testcontainersService.clearOracleContainer();
-        testcontainersService.executeOracleScript(parentAndChildTestOracle);
-        assertParentAndChildTest(TestcontainersConfiguration.ORACLE_CONNECTION_NAME, true);
-    }
+    abstract void testParentAndChildQuery() throws SQLException, DBeaverMCPValidationException;
 
     @Test
-    void queryFirebird() throws SQLException, DBeaverMCPValidationException {
-        testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        testcontainersService.clearFirebirdContainer();
-        testcontainersService.executeFirebirdScript(parentAndChildTestFirebird);
-        assertParentAndChildTest(TestcontainersConfiguration.FIREBIRD_CONNECTION_NAME, true);
-    }
+    abstract void testCannotInsertInReadOnlyTransaction() throws DBeaverMCPValidationException;
 
-    @Test
-    void postgresCannotInsertInReadOnlyTransaction() throws DBeaverMCPValidationException, SQLException {
-        testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        testcontainersService.clearPostgresContainer();
-        testcontainersService.executePostgresScript(parentAndChildTestPostgres);
+    protected abstract String getConnectionName();
 
-        String sql = """
-                INSERT INTO parent_test_entity (random_string, random_date, random_date_time, random_boolean)
-                VALUES ('abc', '2024-03-15', '2024-03-15 14:30:45', TRUE)
-        """;
-        DBeaverMCPValidationException exception = assertThrowsExactly(DBeaverMCPValidationException.class, () -> postgresQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.POSTGRES_CONNECTION_NAME));
-        assertTrue(exception.getMessage().contains("Not possible to execute query: ERROR: cannot execute INSERT in a read-only transaction"));
-    }
-
-    @Test
-    void oracleCannotInsertInReadOnlyTransaction() throws DBeaverMCPValidationException, SQLException {
-        testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        testcontainersService.clearOracleContainer();
-        testcontainersService.executeOracleScript(parentAndChildTestOracle);
-
-        String sql = """
-                INSERT INTO parent_test_entity (random_string, random_date, random_date_time, random_boolean)
-                VALUES ('abc', DATE '2024-03-15', TIMESTAMP '2024-03-15 14:30:45', 1);
-        """;
-        DBeaverMCPValidationException exception = assertThrowsExactly(DBeaverMCPValidationException.class, () -> oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME));
-        assertTrue(exception.getMessage().contains("Not possible to execute query: ORA-01456: may not perform insert, delete, update operation inside a READ ONLY transaction"));
-    }
-
-    @Test
-    void firebirdCannotInsertInReadOnlyTransaction() throws DBeaverMCPValidationException, SQLException {
-        testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        testcontainersService.clearFirebirdContainer();
-        testcontainersService.executeFirebirdScript(parentAndChildTestFirebird);
-
-        String sql = """
-                INSERT INTO parent_test_entity (random_string, random_date, random_date_time, random_boolean)
-                VALUES ('abc', DATE '2024-03-15', TIMESTAMP '2024-03-15 14:30:45', TRUE);
-        """;
-        DBeaverMCPValidationException exception = assertThrowsExactly(DBeaverMCPValidationException.class, () -> firebirdQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.FIREBIRD_CONNECTION_NAME));
-        assertTrue(exception.getMessage().contains("Not possible to execute query: attempted update during read-only transaction [SQLState:25006, ISC error code:335544361]"));
-    }
-
-    private void assertParentAndChildTest(String connectionName, boolean isUppercase) throws DBeaverMCPValidationException, SQLException {
-        QueryService service = queryServiceFactory.getFromConnectionName(connectionName);
+    protected void assertParentAndChildTest(boolean isUppercase) throws DBeaverMCPValidationException, SQLException {
+        QueryService service = queryServiceFactory.getFromConnectionName(getConnectionName());
         String parentSql = "SELECT * FROM parent_test_entity";
-        List<StatementResponseDTO> parentResponses = service.executeReadOnlyStatements(List.of(parentSql), connectionName);
+        List<StatementResponseDTO> parentResponses = service.executeReadOnlyStatements(List.of(parentSql), getConnectionName());
         assertEquals(1, parentResponses.size());
         StatementResponseDTO parentResponse = parentResponses.getFirst();
         assertEquals(parentSql, parentResponse.getSql());
@@ -158,7 +129,7 @@ class QueryServiceTest {
         AssertionUtil.assertFalse(secondParentRow.get(randomBooleanColumn));
 
         String childSql = "SELECT * FROM child_test_entity";
-        List<StatementResponseDTO> childResponses = service.executeReadOnlyStatements(List.of(childSql), connectionName);
+        List<StatementResponseDTO> childResponses = service.executeReadOnlyStatements(List.of(childSql), getConnectionName());
         assertEquals(1, childResponses.size());
         StatementResponseDTO childResponse = childResponses.getFirst();
         assertEquals(childSql, childResponse.getSql());
@@ -184,5 +155,4 @@ class QueryServiceTest {
         assertEquals("dL3jHbF9eZaU6oXn", fourthChildRow.get(randomStringColumn));
         AssertionUtil.assertNumber(2, fourthChildRow.get(parentColumn));
     }
-
 }

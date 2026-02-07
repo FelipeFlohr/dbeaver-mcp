@@ -21,22 +21,11 @@ abstract class GenericQueryServiceImpl implements QueryService {
     @Override
     public List<StatementResponseDTO> executeReadOnlyStatements(List<String> statements, String connectionName) throws DBeaverMCPValidationException {
         if (statements.isEmpty()) return List.of();
-        List<String> statementsBefore = statementsBeforeExecuteReadOnlyQuery();
-        if (!statementsBefore.isEmpty()) {
-            statements = new ArrayList<>(statements);
-            for (int i = 0; i < statementsBefore.size(); i++) {
-                String statement = statementsBefore.get(i);
-                statements.add(i, statement);
-            }
-        }
 
         DataSource ds = poolManager.getDataSourceFromConnectionName(connectionName);
         try (Connection conn = ds.getConnection()) {
             try {
-                // Creates a fresh transaction.
-                conn.rollback();
                 Statement statement = conn.createStatement();
-
                 List<StatementResponseDTO> responses = new ArrayList<>();
                 for (String sql : statements) {
                     boolean hasResultSet = statement.execute(sql);
@@ -54,10 +43,6 @@ abstract class GenericQueryServiceImpl implements QueryService {
         } catch (SQLException e) {
             throw new DBeaverMCPValidationException("Not possible to execute query: " + e.getMessage(), e);
         }
-    }
-
-    protected List<String> statementsBeforeExecuteReadOnlyQuery() {
-        return Collections.emptyList();
     }
 
     private StatementResponseDTO resultSetToStatementResponse(String sql, ResultSet rs) throws DBeaverMCPValidationException {
