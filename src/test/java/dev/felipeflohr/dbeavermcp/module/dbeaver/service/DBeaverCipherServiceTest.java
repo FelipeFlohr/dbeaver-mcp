@@ -60,7 +60,7 @@ class DBeaverCipherServiceTest {
         assertEquals("admin", withSshData.getConnection().getUser());
         assertNull(withSshData.getConnection().getPassword());
         assertNull(withSshData.getConnection().getOracleLogonAs());
-        assertNotNull(withoutSshData.getSshTunnel());
+        assertNotNull(withSshData.getSshTunnel());
         assertEquals("username", withSshData.getSshTunnel().getUser());
         assertEquals("password", withSshData.getSshTunnel().getPassword());
 
