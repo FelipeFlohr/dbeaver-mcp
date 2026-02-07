@@ -1,0 +1,24 @@
+{
+  "properties": [
+    {
+      "name": "dbeavermcp.dbeaver.config.data-sources-file-path",
+      "type": "java.lang.String",
+      "description": "Path to the DBeaver's \"data-sources.json\" file."
+    },
+    {
+      "name": "dbeavermcp.dbeaver.config.credentials-config-file-path",
+      "type": "java.lang.String",
+      "description": "Path to the DBeaver's \"credentials-config.json\" file."
+    },
+    {
+      "name": "dbeavermcp.dbeaver.cipher.key",
+      "type": "java.lang.String",
+      "description": "Key value to use when decrypting the \"credentials-config.json\" file."
+    },
+    {
+      "name": "dbeavermcp.dbeaver.cipher.iv",
+      "type": "java.lang.String",
+      "description": "IV value to use when decrypting the \"credentials-config.json\" file."
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "folders": {},
+  "connections": {
+    "postgres-jdbc-196079609f2-53d190edd595caaa": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "Local Postgres",
+      "save-password": true,
+      "configuration": {
+        "host": "localhost",
+        "port": "5432",
+        "database": "postgres",
+        "url": "jdbc:postgresql://localhost:5432/postgres",
+        "configurationType": "MANUAL",
+        "type": "dev",
+        "closeIdleConnection": true,
+        "provider-properties": {
+          "@dbeaver-show-non-default-db@": "true",
+          "@dbeaver-chosen-role@": ""
+        },
+        "auth-model": "native"
+      }
+    },
+    "postgres-jdbc-19bc99acaa1-78b516adfdeb47d9": {
+      "provider": "postgresql",
+      "driver": "postgres-jdbc",
+      "name": "NVR - Server",
+      "configuration": {
+        "host": "localhost",
+        "port": "5432",
+        "database": "nvr",
+        "url": "jdbc:postgresql://localhost:5432/nvr",
+        "configurationType": "MANUAL",
+        "type": "prod",
+        "closeIdleConnection": true,
+        "properties": {
+          "connectTimeout": "20",
+          "loginTimeout": "20",
+          "escapeSyntaxCallMode": "callIfNoReturn"
+        },
+        "provider-properties": {
+          "@dbeaver-show-non-default-db@": "false",
+          "@dbeaver-chosen-role@": "",
+          "@dbeaver-show-template-db@": "false",
+          "@dbeaver-show-unavailable-db@": "false",
+          "show-database-statistics": "false",
+          "@dbeaver-read-all-data-types-db@": "false",
+          "read-keys-with-columns": "false",
+          "replace-legacy-timezone": "false",
+          "@dbeaver-use-prepared-statements-db@": "false",
+          "postgresql.dd.plain.string": "false",
+          "postgresql.dd.tag.string": "false"
+        },
+        "auth-model": "native",
+        "handlers": {
+          "ssh_tunnel": {
+            "type": "TUNNEL",
+            "enabled": true,
+            "save-password": true,
+            "properties": {
+              "host": "192.168.1.20",
+              "port": 22,
+              "authType": "PASSWORD",
+              "implementation": "sshj",
+              "shareTunnels": true,
+              "localHost": "",
+              "remoteHost": ""
+            }
+          }
+        },
+        "bootstrap": {
+          "autocommit": true,
+          "txnIsolation": 8
+        }
+      }
+    },
+    "oracle_thin-19c2146e52e-70ea308a7473e0a9": {
+      "provider": "oracle",
+      "driver": "oracle_thin",
+      "name": "Oracle Normal",
+      "save-password": true,
+      "configuration": {
+        "host": "localhost",
+        "port": "1521",
+        "database": "ORCL",
+        "url": "jdbc:oracle:thin:@//localhost:1521/ORCL",
+        "configurationType": "MANUAL",
+        "type": "dev",
+        "closeIdleConnection": true,
+        "provider-properties": {
+          "@dbeaver-connection-type@": "BASIC",
+          "@dbeaver-sid-service@": "SERVICE"
+        },
+        "auth-model": "oracle_native",
+        "handlers": {}
+      }
+    },
+    "oracle_thin-19c2147fa39-6d55b3e69d72ab41": {
+      "provider": "oracle",
+      "driver": "oracle_thin",
+      "name": "Oracle as SYSDBA",
+      "save-password": true,
+      "configuration": {
+        "host": "localhost",
+        "port": "1521",
+        "database": "ORCLSIDASSYSDBA",
+        "url": "jdbc:oracle:thin:@localhost:1521:ORCLSIDASSYSDBA",
+        "configurationType": "MANUAL",
+        "type": "dev",
+        "closeIdleConnection": true,
+        "provider-properties": {
+          "@dbeaver-connection-type@": "BASIC",
+          "@dbeaver-sid-service@": "SID"
+        },
+        "auth-model": "oracle_native"
+      }
+    }
+  },
+  "connection-types": {
+    "dev": {
+      "name": "Development",
+      "color": "255,255,255",
+      "description": "Regular development database",
+      "auto-commit": true,
+      "confirm-execute": false,
+      "confirm-data-change": false,
+      "smart-commit": false,
+      "smart-commit-recover": true,
+      "auto-close-transactions": true,
+      "close-transactions-period": 1800,
+      "auto-close-connections": true,
+      "close-connections-period": 14400
+    },
+    "prod": {
+      "name": "Production",
+      "color": "org.jkiss.dbeaver.color.connectionType.prod.background",
+      "description": "Production database",
+      "auto-commit": false,
+      "confirm-execute": true,
+      "confirm-data-change": true,
+      "smart-commit": false,
+      "smart-commit-recover": false,
+      "auto-close-transactions": true,
+      "close-transactions-period": 600,
+      "auto-close-connections": true,
+      "close-connections-period": 3600
+    }
+  }
+}
