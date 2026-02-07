@@ -1,0 +1,2 @@
+# DBeaver MCP
+Placeholder
