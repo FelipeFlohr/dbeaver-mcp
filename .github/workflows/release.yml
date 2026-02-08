@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  release:
+    types: [prereleased]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - run: ./gradlew bootJar
+        working-directory: dbeaver-mcp
+
+      - name: Package Linux artifact
+        run: |
+          mkdir -p staging/dbeaver-mcp-linux
+          cp dbeaver-mcp/build/libs/dbeaver-mcp.jar staging/dbeaver-mcp-linux/
+          cp scripts/run.sh staging/dbeaver-mcp-linux/
+          chmod +x staging/dbeaver-mcp-linux/run.sh
+          cd staging && tar -czf dbeaver-mcp-linux.tar.gz dbeaver-mcp-linux
+
+      - name: Package Windows artifact
+        run: |
+          mkdir -p staging/dbeaver-mcp-windows
+          cp dbeaver-mcp/build/libs/dbeaver-mcp.jar staging/dbeaver-mcp-windows/
+          cp scripts/run.bat staging/dbeaver-mcp-windows/
+          cd staging && zip -r dbeaver-mcp-windows.zip dbeaver-mcp-windows
+
+      - name: Upload artifacts to release
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            dbeaver-mcp/build/libs/dbeaver-mcp.jar \
+            staging/dbeaver-mcp-linux.tar.gz \
+            staging/dbeaver-mcp-windows.zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Promote to release
+        run: gh release edit "${{ github.event.release.tag_name }}" --prerelease=false
+        env:
+          GH_TOKEN: ${{ github.token }}

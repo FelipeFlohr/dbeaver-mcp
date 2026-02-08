@@ -57,6 +57,11 @@ dependencyManagement {
     }
 }
 
+tasks.named('bootJar') {
+    archiveBaseName = 'dbeaver-mcp'
+    archiveVersion = ''
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }

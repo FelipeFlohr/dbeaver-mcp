@@ -75,3 +75,29 @@ Application properties in `src/main/resources/application.properties`:
 - `dbeavermcp.dbeaver.cipher.key/iv`: DBeaver credential decryption keys
 
 The application runs in STDIO mode (`spring.ai.mcp.server.stdio=true`) with virtual threads enabled.
+
+## Build & Release
+
+The `bootJar` task generates `dbeaver-mcp.jar` (configured in `build.gradle` with no version suffix). Run from the `dbeaver-mcp/` directory:
+
+```bash
+./gradlew bootJar
+```
+
+### Distribution Scripts
+
+The `scripts/` directory contains launcher scripts for end users:
+
+- `run.sh` (Linux): Downloads Adoptium JRE 25 on first run, then executes the jar
+- `run.bat` (Windows): Same behavior using PowerShell for download/extraction
+
+Both scripts accept application parameters via command-line arguments (e.g., `./run.sh --dbeavermcp.dbeaver.config.data-sources-file-path=/path`).
+
+### Release Workflow
+
+The GitHub Actions workflow (`.github/workflows/release.yml`) triggers on pre-release creation:
+
+1. Builds the jar with `./gradlew bootJar`
+2. Packages `dbeaver-mcp-linux.tar.gz` (jar + `run.sh`) and `dbeaver-mcp-windows.zip` (jar + `run.bat`)
+3. Uploads both artifacts to the GitHub release
+4. Promotes the pre-release to a full release
