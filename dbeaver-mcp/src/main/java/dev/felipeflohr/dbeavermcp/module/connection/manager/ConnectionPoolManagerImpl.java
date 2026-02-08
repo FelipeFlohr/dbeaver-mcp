@@ -124,7 +124,12 @@ class ConnectionPoolManagerImpl implements ConnectionPoolManager {
 
     @PreDestroy
     private void closeAll() {
+        int amountOfConnections = pools.size();
+        if (amountOfConnections == 0) return;
+
+        log.info("Closing {} connection(s).", pools.size());
         pools.values().forEach(HikariDataSource::close);
+        log.info("Closed {} connection(s).", amountOfConnections);
         pools.clear();
     }
 }

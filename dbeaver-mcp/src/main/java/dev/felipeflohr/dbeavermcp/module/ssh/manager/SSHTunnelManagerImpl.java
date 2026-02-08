@@ -5,12 +5,14 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @NullMarked
 @Service
 class SSHTunnelManagerImpl implements SSHTunnelManager {
@@ -44,7 +46,12 @@ class SSHTunnelManagerImpl implements SSHTunnelManager {
 
     @PreDestroy
     private void closeAll() {
+        int amountOfSessions = activeTunnels.size();
+        if (amountOfSessions == 0) return;
+
+        log.info("Closing {} session(s).", amountOfSessions);
         activeTunnels.values().forEach(Session::disconnect);
+        log.info("Closed {} session(s).", amountOfSessions);
         activeTunnels.clear();
     }
 }
