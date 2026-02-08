@@ -18,4 +18,4 @@ if not exist "%JRE_DIR%" (
 )
 
 set "JAVA_HOME=%JRE_DIR%"
-"%JAVA_HOME%\bin\java" -jar "%JAR_FILE%" %*
+"%JAVA_HOME%\bin\java" -Xmx256m -jar "%JAR_FILE%" %*
