@@ -18,4 +18,4 @@ if [ ! -d "$JRE_DIR" ]; then
 fi
 
 export JAVA_HOME="$JRE_DIR"
-exec "$JAVA_HOME/bin/java" -jar "$JAR_FILE" "$@"
+exec "$JAVA_HOME/bin/java" -Xmx256m -jar "$JAR_FILE" "$@"

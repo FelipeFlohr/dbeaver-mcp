@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NullMarked
 @Data
@@ -16,4 +17,10 @@ public class AvailableConnectionDTO {
     private String name;
     private String provider;
     private String url;
+
+    @Nullable
+    private String sshHost;
+
+    @Nullable
+    private Integer sshPort;
 }

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'dev.felipeflohr'
-version = '0.0.1'
+version = '0.1.0'
 description = 'dbeaver-mcp'
 
 java {
@@ -31,8 +31,8 @@ ext {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
-    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
+    implementation 'com.github.mwiede:jsch:2.27.7'
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
     runtimeOnly 'org.postgresql:postgresql'

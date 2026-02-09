@@ -6,11 +6,18 @@ import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import dev.felipeflohr.dbeavermcp.module.connection.enumeration.DatabaseType;
 import dev.felipeflohr.dbeavermcp.module.connection.factory.config.HikariConfigFactory;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.model.auth.DBeaverAuthConnectionDataDTO;
+import dev.felipeflohr.dbeavermcp.module.dbeaver.model.auth.DBeaverAuthSSHTunnelDTO;
+import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationHandlersDTO;
+import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationSSHTunnelPropertiesDTO;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionDTO;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverDataSourcesDTO;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverCipherService;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverDataSourceService;
+import dev.felipeflohr.dbeavermcp.module.ssh.manager.SSHTunnelManager;
+import dev.felipeflohr.dbeavermcp.util.JdbcUrlUtils;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -21,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @NullMarked
 @RequiredArgsConstructor
 @Service
@@ -28,6 +36,7 @@ class ConnectionPoolManagerImpl implements ConnectionPoolManager {
     private final HikariConfigFactory configFactory;
     private final DBeaverDataSourceService dBeaverDataSourceService;
     private final DBeaverCipherService dBeaverCipherService;
+    private final SSHTunnelManager sshTunnelManager;
 
     private final Map<String, HikariDataSource> pools = new ConcurrentHashMap<>();
 
@@ -43,6 +52,7 @@ class ConnectionPoolManagerImpl implements ConnectionPoolManager {
         String jdbcUrl = connectionData.getConfiguration().getUrl();
         String username = authData.getConnection().getUser();
         String password = authData.getConnection().getPassword();
+        jdbcUrl = applySSHTunnelIfNeeded(connectionIdentifier, connectionData, authData, jdbcUrl);
         return getDataSource(provider, jdbcUrl, username, password);
     }
 
@@ -78,5 +88,48 @@ class ConnectionPoolManagerImpl implements ConnectionPoolManager {
         var dataSource = new HikariDataSource(config);
         pools.put(poolKey, dataSource);
         return dataSource;
+    }
+
+    private String applySSHTunnelIfNeeded(
+            String connectionId,
+            DBeaverConnectionDTO connectionData,
+            DBeaverAuthConnectionDataDTO authData,
+            String jdbcUrl
+    ) throws DBeaverMCPValidationException {
+        DBeaverConnectionConfigurationHandlersDTO handlers = connectionData.getConfiguration().getHandlers();
+        if (handlers == null || handlers.getSshTunnel() == null || !handlers.getSshTunnel().isEnabled()) {
+            return jdbcUrl;
+        }
+        if (authData.getSshTunnel() == null) {
+            throw new DBeaverMCPValidationException("SSH tunnel is enabled but no SSH credentials were found for connection %s".formatted(connectionData.getName()));
+        }
+
+        DBeaverConnectionConfigurationSSHTunnelPropertiesDTO sshProps = handlers.getSshTunnel().getProperties();
+        DBeaverAuthSSHTunnelDTO sshAuth = authData.getSshTunnel();
+        JdbcUrlUtils.JdbcUrlParts jdbcUrlParts = JdbcUrlUtils.extractJdbcUrlParts(jdbcUrl);
+        int localPort = sshTunnelManager.openTunnel(
+                connectionId,
+                sshProps.getHost(),
+                sshProps.getPort(),
+                sshAuth.getUser(),
+                sshAuth.getPassword(),
+                jdbcUrlParts.host(),
+                jdbcUrlParts.port()
+        );
+
+        String newJdbcUrl = JdbcUrlUtils.rewriteJdbcUrlHostAndPort(jdbcUrl, "localhost", localPort);
+        log.info("Applied SSH tunnel to connection \"{}\". Previous JDBC URL: {} | Current JDBC URL: {}", connectionId, jdbcUrl, newJdbcUrl);
+        return newJdbcUrl;
+    }
+
+    @PreDestroy
+    private void closeAll() {
+        int amountOfConnections = pools.size();
+        if (amountOfConnections == 0) return;
+
+        log.info("Closing {} connection(s).", pools.size());
+        pools.values().forEach(HikariDataSource::close);
+        log.info("Closed {} connection(s).", amountOfConnections);
+        pools.clear();
     }
 }
