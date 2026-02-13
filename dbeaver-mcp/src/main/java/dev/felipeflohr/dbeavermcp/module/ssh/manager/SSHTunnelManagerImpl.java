@@ -25,8 +25,10 @@ class SSHTunnelManagerImpl implements SSHTunnelManager {
             if (activeTunnels.containsKey(tunnelKey)) {
                 Session session = activeTunnels.get(tunnelKey);
                 if (session.isConnected()) {
-                    return Integer.parseInt(session.getPortForwardingL()[0]);
+                    log.info("Tunnel active for \"{}\". Using it.", tunnelKey);
+                    return Integer.parseInt(session.getPortForwardingL()[0].split(":")[0]);
                 }
+                log.info("Tunnel \"{}\" found on the tunnels map, but it is not active. Removing it.", tunnelKey);
                 activeTunnels.remove(tunnelKey);
             }
 
