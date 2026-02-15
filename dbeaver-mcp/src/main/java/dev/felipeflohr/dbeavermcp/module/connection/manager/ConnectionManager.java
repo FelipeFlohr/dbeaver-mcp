@@ -7,7 +7,7 @@ import org.jspecify.annotations.NullMarked;
 import javax.sql.DataSource;
 
 @NullMarked
-public interface ConnectionPoolManager {
+public interface ConnectionManager {
     DataSource getDataSourceFromConnectionName(String connectionName) throws DBeaverMCPValidationException;
     DatabaseType getDatabaseTypeFromConnectionName(String connectionName) throws DBeaverMCPValidationException;
 }

@@ -1,7 +1,7 @@
 package dev.felipeflohr.dbeavermcp.module.query.factory;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
-import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionPoolManager;
+import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionManager;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationHandlersDTO;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationSSHTunnelHandlerDTO;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationSSHTunnelPropertiesDTO;
@@ -25,11 +25,11 @@ public class QueryServiceFactory {
     private final QueryService postgresQueryServiceImpl;
     private final QueryService oracleQueryServiceImpl;
     private final QueryService firebirdQueryServiceImpl;
-    private final ConnectionPoolManager connectionPoolManager;
+    private final ConnectionManager connectionManager;
     private final DBeaverDataSourceService dBeaverDataSourceService;
 
     public QueryService getFromConnectionName(String connectionName) throws DBeaverMCPValidationException {
-        return switch (connectionPoolManager.getDatabaseTypeFromConnectionName(connectionName)) {
+        return switch (connectionManager.getDatabaseTypeFromConnectionName(connectionName)) {
             case POSTGRES -> postgresQueryServiceImpl;
             case ORACLE -> oracleQueryServiceImpl;
             case FIREBIRD -> firebirdQueryServiceImpl;

@@ -1,7 +1,7 @@
 package dev.felipeflohr.dbeavermcp.module.query.service;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
-import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionPoolManager;
+import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionManager;
 import dev.felipeflohr.dbeavermcp.module.query.model.StatementResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +15,8 @@ import java.util.*;
 @NullMarked
 @RequiredArgsConstructor
 abstract class GenericQueryServiceImpl implements QueryService {
-    private final ConnectionPoolManager poolManager;
+    protected final ConnectionManager poolManager;
 
-    @SuppressWarnings("SqlSourceToSinkFlow")
     @Override
     public List<StatementResponseDTO> executeReadOnlyStatements(List<String> statements, String connectionName) throws DBeaverMCPValidationException {
         if (statements.isEmpty()) return List.of();
@@ -26,17 +25,7 @@ abstract class GenericQueryServiceImpl implements QueryService {
         try (Connection conn = ds.getConnection()) {
             try {
                 Statement statement = conn.createStatement();
-                List<StatementResponseDTO> responses = new ArrayList<>();
-                for (String sql : statements) {
-                    boolean hasResultSet = statement.execute(sql);
-                    if (hasResultSet) {
-                        ResultSet rs = statement.getResultSet();
-                        responses.add(resultSetToStatementResponse(sql, rs));
-                    }
-                    log.info("Statement {} executed successfully. Has result set: {}", sql, hasResultSet);
-                }
-                log.info("Finished executing {} SQLs", statements.size());
-                return responses;
+                return getStatementResponses(statements, statement);
             } finally {
                 conn.rollback();
             }
@@ -45,7 +34,7 @@ abstract class GenericQueryServiceImpl implements QueryService {
         }
     }
 
-    private StatementResponseDTO resultSetToStatementResponse(String sql, ResultSet rs) throws DBeaverMCPValidationException {
+    protected StatementResponseDTO resultSetToStatementResponse(String sql, ResultSet rs) throws DBeaverMCPValidationException {
         try {
             ResultSetMetaData metaData = rs.getMetaData();
             int columnCount = metaData.getColumnCount();
@@ -66,4 +55,18 @@ abstract class GenericQueryServiceImpl implements QueryService {
         }
     }
 
+    @SuppressWarnings("SqlSourceToSinkFlow")
+    protected List<StatementResponseDTO> getStatementResponses(List<String> sqls, Statement statement) throws SQLException, DBeaverMCPValidationException {
+        List<StatementResponseDTO> responses = new ArrayList<>();
+        for (String sql : sqls) {
+            boolean hasResultSet = statement.execute(sql);
+            if (hasResultSet) {
+                ResultSet rs = statement.getResultSet();
+                responses.add(resultSetToStatementResponse(sql, rs));
+            }
+            log.info("Statement {} executed successfully. Has result set: {}", sql, hasResultSet);
+        }
+        log.info("Finished executing {} SQLs", sqls.size());
+        return responses;
+    }
 }
