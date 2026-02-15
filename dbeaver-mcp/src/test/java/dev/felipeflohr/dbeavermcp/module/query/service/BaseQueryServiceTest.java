@@ -2,7 +2,7 @@ package dev.felipeflohr.dbeavermcp.module.query.service;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import dev.felipeflohr.dbeavermcp.module.connection.enumeration.DatabaseType;
-import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionPoolManager;
+import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionManager;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverCipherService;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverDataSourceService;
 import dev.felipeflohr.dbeavermcp.module.query.factory.QueryServiceFactory;
@@ -40,7 +40,7 @@ abstract class BaseQueryServiceTest {
     private TestcontainersService testcontainersService;
 
     @Autowired
-    private ConnectionPoolManager connectionPoolManager;
+    private ConnectionManager connectionManager;
 
     @MockitoBean
     private DBeaverDataSourceService mockedDBeaverDataSourceService;
@@ -58,15 +58,16 @@ abstract class BaseQueryServiceTest {
     private Resource parentAndChildTestFirebird;
 
     @BeforeEach
-    void beforeEach() throws DBeaverMCPValidationException, SQLException {
+    void beforeEach() throws DBeaverMCPValidationException, SQLException, InterruptedException {
         testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        DatabaseType databaseType = connectionPoolManager.getDatabaseTypeFromConnectionName(getConnectionName());
+        DatabaseType databaseType = connectionManager.getDatabaseTypeFromConnectionName(getConnectionName());
         switch (databaseType) {
             case POSTGRES:
                 testcontainersService.executePostgresScript(parentAndChildTestPostgres);
                 break;
             case ORACLE:
                 testcontainersService.executeOracleScript(parentAndChildTestOracle);
+                Thread.sleep(1000); // Necessary because of the ORA-01466 error
                 break;
             case FIREBIRD:
                 testcontainersService.executeFirebirdScript(parentAndChildTestFirebird);
@@ -76,7 +77,7 @@ abstract class BaseQueryServiceTest {
 
     @AfterEach
     void afterEach() throws DBeaverMCPValidationException, SQLException {
-        DatabaseType databaseType = connectionPoolManager.getDatabaseTypeFromConnectionName(getConnectionName());
+        DatabaseType databaseType = connectionManager.getDatabaseTypeFromConnectionName(getConnectionName());
         switch (databaseType) {
             case POSTGRES:
                 testcontainersService.clearPostgresContainer();

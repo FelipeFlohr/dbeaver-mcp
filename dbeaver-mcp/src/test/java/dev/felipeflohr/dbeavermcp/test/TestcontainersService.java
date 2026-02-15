@@ -100,19 +100,13 @@ public class TestcontainersService {
     public void clearOracleContainer() throws SQLException {
         Connection connection = getConnection(oracleContainer.getJdbcUrl(), oracleContainer.getUsername(), oracleContainer.getPassword());
         try (Statement statement = connection.createStatement()) {
-            ResultSet tables = statement.executeQuery(
-                    "SELECT table_name FROM user_tables"
-            );
-
-            List<String> tableNames = new ArrayList<>();
-            while (tables.next()) {
-                tableNames.add(tables.getString("table_name"));
-            }
-            tables.close();
-
-            for (String tableName : tableNames) {
-                statement.execute("DROP TABLE \"" + tableName + "\" CASCADE CONSTRAINTS PURGE");
-            }
+            String sql = """
+                    Begin
+                        for c in (select table_name from user_tables) loop
+                            execute immediate ('drop table ' ||c.table_name|| ' cascade constraints');
+                        end loop;
+                    End;""";
+            statement.execute(sql);
         }
         log.info("Cleared Oracle database.");
     }

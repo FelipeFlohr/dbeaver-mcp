@@ -1,7 +1,6 @@
 package dev.felipeflohr.dbeavermcp.module.query.service;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
-import dev.felipeflohr.dbeavermcp.module.query.model.StatementResponseDTO;
 import dev.felipeflohr.dbeavermcp.test.TestcontainersConfiguration;
 import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.Test;
@@ -13,7 +12,7 @@ import org.springframework.context.annotation.Import;
 import java.sql.SQLException;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @NullMarked
 @Import(TestcontainersConfiguration.class)
@@ -31,15 +30,13 @@ class OracleQueryServiceTest extends BaseQueryServiceTest {
 
     @Override
     @Test
-    void testCannotInsertInReadOnlyTransaction() throws DBeaverMCPValidationException {
+    void testCannotInsertInReadOnlyTransaction() {
         String sql = """
                 INSERT INTO parent_test_entity (random_string, random_date, random_date_time, random_boolean)
                 VALUES ('abc', DATE '2024-03-15', TIMESTAMP '2024-03-15 14:30:45', 1);
         """;
-        oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME);
-
-        List<StatementResponseDTO> responses = oracleQueryService.executeReadOnlyStatements(List.of("SELECT * FROM parent_test_entity WHERE random_string = 'abc'"), TestcontainersConfiguration.ORACLE_CONNECTION_NAME);
-        assertTrue(responses.getFirst().getResponse().isEmpty());
+        DBeaverMCPValidationException exception = assertThrowsExactly(DBeaverMCPValidationException.class, () -> oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME));
+        assertTrue(exception.getMessage().contains("Not possible to execute query: ORA-01456: may not perform insert, delete, update operation inside a READ ONLY transaction"));
     }
 
     @Override
