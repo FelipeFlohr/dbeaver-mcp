@@ -60,9 +60,10 @@ public class TestcontainersService {
         }
     }
 
-    public void executeOracleScript(Resource script) throws SQLException {
+    public void executeOracleScript(Resource script) throws SQLException, InterruptedException {
         try (Connection connection = getConnection(oracleContainer.getJdbcUrl(), oracleContainer.getUsername(), oracleContainer.getPassword())) {
             ScriptUtils.executeSqlScript(connection, script);
+            Thread.sleep(1500); // Necessary because of the ORA-01466 error
         }
     }
 
