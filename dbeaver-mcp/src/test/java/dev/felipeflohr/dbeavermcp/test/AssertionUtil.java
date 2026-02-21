@@ -31,6 +31,7 @@ public class AssertionUtil {
             case LocalDate localDate -> assertEquals(expected, localDate);
             case Date date -> assertEquals(expected, date.toLocalDate());
             case Timestamp timestamp -> assertEquals(expected, timestamp.toLocalDateTime().toLocalDate());
+            case LocalDateTime localDateTime -> assertEquals(expected, localDateTime.toLocalDate());
             default -> throw new AssertionError("Type %s is not a supported date".formatted(actual.getClass().getName()));
         }
     }

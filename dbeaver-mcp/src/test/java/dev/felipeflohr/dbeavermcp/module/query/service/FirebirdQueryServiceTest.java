@@ -3,6 +3,7 @@ package dev.felipeflohr.dbeavermcp.module.query.service;
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import dev.felipeflohr.dbeavermcp.test.TestcontainersConfiguration;
 import org.jspecify.annotations.NullMarked;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,13 +23,17 @@ class FirebirdQueryServiceTest extends BaseQueryServiceTest {
     @Qualifier("firebirdQueryServiceImpl")
     private QueryService firebirdQueryService;
 
+    @Test
     @Override
-    void testParentAndChildQuery() throws SQLException, DBeaverMCPValidationException {
-        assertParentAndChildTest(false);
+    void testParentAndChildQuery() throws SQLException, DBeaverMCPValidationException, InterruptedException {
+        createParentAndChildStructure();
+        assertParentAndChildTest(true);
     }
 
+    @Test
     @Override
-    void testCannotInsertInReadOnlyTransaction() {
+    void testCannotInsertInReadOnlyTransaction() throws SQLException, DBeaverMCPValidationException, InterruptedException {
+        createParentAndChildStructure();
         String sql = """
                 INSERT INTO parent_test_entity (random_string, random_date, random_date_time, random_boolean)
                 VALUES ('abc', DATE '2024-03-15', TIMESTAMP '2024-03-15 14:30:45', TRUE);

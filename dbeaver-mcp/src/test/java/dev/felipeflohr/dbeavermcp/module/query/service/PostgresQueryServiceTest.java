@@ -25,13 +25,15 @@ class PostgresQueryServiceTest extends BaseQueryServiceTest {
 
     @Override
     @Test
-    void testParentAndChildQuery() throws SQLException, DBeaverMCPValidationException {
+    void testParentAndChildQuery() throws SQLException, DBeaverMCPValidationException, InterruptedException {
+        createParentAndChildStructure();
         assertParentAndChildTest(false);
     }
 
     @Override
     @Test
-    void testCannotInsertInReadOnlyTransaction() {
+    void testCannotInsertInReadOnlyTransaction() throws SQLException, DBeaverMCPValidationException, InterruptedException {
+        createParentAndChildStructure();
         String sql = """
                 INSERT INTO parent_test_entity (random_string, random_date, random_date_time, random_boolean)
                 VALUES ('abc', '2024-03-15', '2024-03-15 14:30:45', TRUE)

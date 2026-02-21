@@ -34,7 +34,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
     implementation 'com.github.mwiede:jsch:2.27.7'
     compileOnly 'org.projectlombok:lombok'
-    runtimeOnly 'com.oracle.database.jdbc:ojdbc11'
+    implementation 'com.oracle.database.jdbc:ojdbc11'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'org.firebirdsql.jdbc:jaybird:6.0.4'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
@@ -47,7 +47,6 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-oracle-free'
     testImplementation 'org.testcontainers:testcontainers-postgresql'
     testImplementation 'org.firebirdsql:firebird-testcontainers-java:1.6.0'
-    testImplementation 'com.oracle.database.jdbc:ojdbc11'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

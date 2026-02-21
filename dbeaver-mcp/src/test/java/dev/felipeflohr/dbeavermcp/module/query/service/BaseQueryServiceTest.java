@@ -37,7 +37,7 @@ abstract class BaseQueryServiceTest {
     private QueryServiceFactory queryServiceFactory;
 
     @Autowired
-    private TestcontainersService testcontainersService;
+    protected TestcontainersService testcontainersService;
 
     @Autowired
     private ConnectionManager connectionManager;
@@ -49,30 +49,17 @@ abstract class BaseQueryServiceTest {
     private DBeaverCipherService mockedDBeaverCipherService;
 
     @Value("classpath:scripts/parent-and-child-test-postgres.sql")
-    private Resource parentAndChildTestPostgres;
+    private Resource parentAndChildTestPostgresScript;
 
     @Value("classpath:scripts/parent-and-child-test-oracle.sql")
-    private Resource parentAndChildTestOracle;
+    private Resource parentAndChildTestOracleScript;
 
     @Value("classpath:scripts/parent-and-child-test-firebird.sql")
-    private Resource parentAndChildTestFirebird;
+    private Resource parentAndChildTestFirebirdScript;
 
     @BeforeEach
-    void beforeEach() throws DBeaverMCPValidationException, SQLException, InterruptedException {
+    void beforeEach() throws DBeaverMCPValidationException {
         testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
-        DatabaseType databaseType = connectionManager.getDatabaseTypeFromConnectionName(getConnectionName());
-        switch (databaseType) {
-            case POSTGRES:
-                testcontainersService.executePostgresScript(parentAndChildTestPostgres);
-                break;
-            case ORACLE:
-                testcontainersService.executeOracleScript(parentAndChildTestOracle);
-                Thread.sleep(1000); // Necessary because of the ORA-01466 error
-                break;
-            case FIREBIRD:
-                testcontainersService.executeFirebirdScript(parentAndChildTestFirebird);
-                break;
-        }
     }
 
     @AfterEach
@@ -92,10 +79,10 @@ abstract class BaseQueryServiceTest {
     }
 
     @Test
-    abstract void testParentAndChildQuery() throws SQLException, DBeaverMCPValidationException;
+    abstract void testParentAndChildQuery() throws SQLException, DBeaverMCPValidationException, InterruptedException;
 
     @Test
-    abstract void testCannotInsertInReadOnlyTransaction() throws DBeaverMCPValidationException;
+    abstract void testCannotInsertInReadOnlyTransaction() throws DBeaverMCPValidationException, SQLException, InterruptedException;
 
     protected abstract String getConnectionName();
 
@@ -155,5 +142,20 @@ abstract class BaseQueryServiceTest {
         AssertionUtil.assertNumber(4, fourthChildRow.get(idColumn));
         assertEquals("dL3jHbF9eZaU6oXn", fourthChildRow.get(randomStringColumn));
         AssertionUtil.assertNumber(2, fourthChildRow.get(parentColumn));
+    }
+
+    protected void createParentAndChildStructure() throws DBeaverMCPValidationException, SQLException, InterruptedException {
+        DatabaseType databaseType = connectionManager.getDatabaseTypeFromConnectionName(getConnectionName());
+        switch (databaseType) {
+            case POSTGRES:
+                testcontainersService.executePostgresScript(parentAndChildTestPostgresScript);
+                break;
+            case ORACLE:
+                testcontainersService.executeOracleScript(parentAndChildTestOracleScript);
+                break;
+            case FIREBIRD:
+                testcontainersService.executeFirebirdScript(parentAndChildTestFirebirdScript);
+                break;
+        }
     }
 }
