@@ -57,6 +57,7 @@ class OracleQueryServiceImpl extends GenericQueryServiceImpl {
             for (Map.Entry<String, Object> entry : row.entrySet()) {
                 String columnName = entry.getKey();
                 Object value = entry.getValue();
+                if (value == null) continue;
 
                 switch (value) {
                     case CLOB oracleClob -> row.put(columnName, oracleClob.stringValue());
