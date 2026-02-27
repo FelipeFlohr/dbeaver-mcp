@@ -36,7 +36,7 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
     implementation 'com.oracle.database.jdbc:ojdbc11'
     runtimeOnly 'org.postgresql:postgresql'
-    runtimeOnly 'org.firebirdsql.jdbc:jaybird:6.0.4'
+    runtimeOnly 'org.firebirdsql.jdbc:jaybird:5.0.4.java11'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
