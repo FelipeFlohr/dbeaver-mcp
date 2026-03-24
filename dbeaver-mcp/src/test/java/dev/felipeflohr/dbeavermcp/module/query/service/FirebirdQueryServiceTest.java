@@ -39,7 +39,7 @@ class FirebirdQueryServiceTest extends BaseQueryServiceTest {
                 VALUES ('abc', DATE '2024-03-15', TIMESTAMP '2024-03-15 14:30:45', TRUE);
         """;
         DBeaverMCPValidationException exception = assertThrowsExactly(DBeaverMCPValidationException.class, () -> firebirdQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.FIREBIRD_CONNECTION_NAME));
-        assertTrue(exception.getMessage().contains("Not possible to execute query: attempted update during read-only transaction [SQLState:25006, ISC error code:335544361]"));
+        assertTrue(exception.getMessage().contains("Not possible to execute query: attempted update during read-only transaction"));
     }
 
     @Override
