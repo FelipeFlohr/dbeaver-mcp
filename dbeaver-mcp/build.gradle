@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'dev.felipeflohr'
-version = '0.1.4'
+version = '0.1.5'
 description = 'dbeaver-mcp'
 
 java {
