@@ -27,12 +27,20 @@ To add support for a new database:
 
 All commands should be run from the `dbeaver-mcp/` directory using the Gradle wrapper.
 
+```bash
+./gradlew compileJava                # Compile sources
+./gradlew test                       # Run all tests (requires Docker for Testcontainers)
+./gradlew test --tests "fully.qualified.ClassName"  # Run a single test class
+./gradlew bootJar                    # Build the fat JAR (output: build/libs/dbeaver-mcp.jar)
+```
+
 ## Architecture
 
 The codebase follows a modular structure under `dev.felipeflohr.dbeavermcp.module`:
 
 - **mcp**: MCP service layer exposing tools via `@McpTool` annotations
   - `QueryMCPService`: Exposes `list_available_connections` and `execute_read_only_query` tools
+  - `EntityParserMCPService`: Exposes `parse_jpa_entity` tool for extracting table/column mappings from Java JPA entity source files
 
 - **query**: Query execution services with database-specific implementations
   - `QueryService` interface with `PostgresQueryServiceImpl`, `OracleQueryServiceImpl`, `FirebirdQueryServiceImpl`
@@ -47,6 +55,12 @@ The codebase follows a modular structure under `dev.felipeflohr.dbeavermcp.modul
   - `DBeaverDataSourceService`: Parses connection configurations
   - `DBeaverCipherService`: Decrypts DBeaver stored credentials
 
+- **entityparser**: JPA entity source file parser (uses JavaParser library)
+  - `EntityParserService`: Parses `.java` files and extracts table name + column mappings
+  - Supports `@Column`, `@JoinColumn`, `@JoinColumns`, `@Embedded`, `@EmbeddedId`, `@MappedSuperclass` inheritance, `@AttributeOverride`/`@AttributeOverrides`
+  - Configurable `NamingStrategy` (TO_SNAKE_CASE, TO_UPPER_CASE, TO_LOWER_CASE, DO_NOTHING)
+  - Uses `JavaSymbolSolver` configured with source root auto-detection for type resolution
+
 - **system**: OS detection for locating DBeaver config paths
 
 ## Key Patterns
@@ -58,7 +72,9 @@ The codebase follows a modular structure under `dev.felipeflohr.dbeavermcp.modul
 
 ## Testing
 
-Tests use Testcontainers with Oracle, PostgreSQL, and Firebird containers. The `TestcontainersConfiguration` class sets up database containers and mock DBeaver configurations.
+Tests use Testcontainers with Oracle, PostgreSQL, and Firebird containers. The `TestcontainersConfiguration` class sets up database containers and mock DBeaver configurations. Docker must be running to execute integration tests.
+
+The `EntityParserServiceTest` uses `@TempDir` to create temporary Java source files and parses them directly (no Spring context or Docker needed).
 
 Key test utilities:
 
