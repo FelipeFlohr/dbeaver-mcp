@@ -1,9 +1,12 @@
 package dev.felipeflohr.dbeavermcp.module.query.service;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
+import dev.felipeflohr.dbeavermcp.module.entityparser.mcp.EntityParserMCPService;
+import dev.felipeflohr.dbeavermcp.module.query.model.StatementErrorResponseDTO;
 import dev.felipeflohr.dbeavermcp.module.query.model.StatementResponseDTO;
 import dev.felipeflohr.dbeavermcp.test.TestcontainersConfiguration;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -46,22 +49,28 @@ class OracleQueryServiceTest extends BaseQueryServiceTest {
                 INSERT INTO parent_test_entity (random_string, random_date, random_date_time, random_boolean)
                 VALUES ('abc', DATE '2024-03-15', TIMESTAMP '2024-03-15 14:30:45', 1);
         """;
-        DBeaverMCPValidationException exception = assertThrowsExactly(DBeaverMCPValidationException.class, () -> oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME));
-        assertTrue(exception.getMessage().contains("Not possible to execute query: ORA-01456: may not perform insert, delete, update operation inside a READ ONLY transaction"));
+        List<StatementResponseDTO> responses = oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME, null);
+        assertEquals(1, responses.size());
+        assertEquals(sql, responses.getFirst().getSql());
+        assertNull(responses.getFirst().getResponse());
+        assertNotNull(responses.getFirst().getError());
+        StatementErrorResponseDTO error = responses.getFirst().getError();
+        assertTrue(error.getMessage().contains("ORA-01456: may not perform insert, delete, update operation inside a READ ONLY transaction"));
     }
 
     @Test
     void testTypeConversion() throws SQLException, DBeaverMCPValidationException, InterruptedException {
         testcontainersService.executeOracleScript(typeTestOracleScript);
         String sql = "SELECT * FROM all_oracle_types";
-        List<StatementResponseDTO> responses = oracleQueryService.executeReadOnlyStatements(List.of(sql), getConnectionName());
+        List<StatementResponseDTO> responses = oracleQueryService.executeReadOnlyStatements(List.of(sql), getConnectionName(), null);
         assertEquals(1, responses.size());
 
         StatementResponseDTO response = responses.getFirst();
         assertEquals(sql, response.getSql());
 
+        assertNotNull(response.getResponse());
         assertEquals(1, response.getResponse().size());
-        Map<String, Object> row = response.getResponse().getFirst();
+        Map<String, @Nullable Object> row = response.getResponse().getFirst();
         assertEquals(new BigDecimal("123456789.987654321"), row.get("COL_NUMBER"));
         assertEquals(BigDecimal.valueOf(1234567890), row.get("COL_NUMBER_P"));
         assertEquals(BigDecimal.valueOf(12345678.99), row.get("COL_NUMBER_PS"));
@@ -88,6 +97,57 @@ class OracleQueryServiceTest extends BaseQueryServiceTest {
         assertEquals("3-6", row.get("COL_INTERVAL_YM"));
         assertEquals("5 4:30:15.5", row.get("COL_INTERVAL_DS"));
         assertEquals("MCP converted this value to Base64 from a BLOB type: SGVsbG8gd29ybGQh", row.get("COL_BLOB"));
+    }
+
+    @Test
+    void testInvalidIdentifierReturnsHintWhenQueryingUnexistentColumn() throws SQLException, DBeaverMCPValidationException, InterruptedException {
+        createParentAndChildStructure();
+        String sql = "SELECT just_a_column_trust_me FROM parent_test_entity";
+        List<StatementResponseDTO> responses = oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME, null);
+
+        assertEquals(1, responses.size());
+        assertEquals(sql, responses.getFirst().getSql());
+        assertNull(responses.getFirst().getResponse());
+        assertNotNull(responses.getFirst().getError());
+
+        StatementErrorResponseDTO error = responses.getFirst().getError();
+        assertNotNull(error.getHint());
+        String expectedHint = "You have an invalid identifier in your SQL. To avoid expend unnecessary tokens and time, try " +
+                "using the \"%s\" MCP tool.".formatted(EntityParserMCPService.GET_TABLE_COLUMNS_FROM_JPA_ENTITY_TOOL_NAME);
+        assertEquals(expectedHint, error.getHint());
+    }
+
+    @Test
+    void testInvalidIdentifierReturnsHintWhenQueryingUnexistentTable() throws SQLException, DBeaverMCPValidationException, InterruptedException {
+        createParentAndChildStructure();
+        String sql = "SELECT just_a_column_trust_me FROM just_a_table_trust_me";
+        List<StatementResponseDTO> responses = oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME, null);
+
+        assertEquals(1, responses.size());
+        assertEquals(sql, responses.getFirst().getSql());
+        assertNull(responses.getFirst().getResponse());
+        assertNotNull(responses.getFirst().getError());
+
+        StatementErrorResponseDTO error = responses.getFirst().getError();
+        assertNotNull(error.getHint());
+        String expectedHint = "You have an invalid identifier in your SQL. To avoid expend unnecessary tokens and time, try " +
+                "using the \"%s\" MCP tool.".formatted(EntityParserMCPService.GET_TABLE_COLUMNS_FROM_JPA_ENTITY_TOOL_NAME);
+        assertEquals(expectedHint, error.getHint());
+    }
+
+    @Test
+    void testTimeoutIsEnforced() throws DBeaverMCPValidationException {
+        String sql = "SELECT COUNT(*) FROM (SELECT LEVEL FROM DUAL CONNECT BY LEVEL <= 100000000)";
+        long start = System.currentTimeMillis();
+        List<StatementResponseDTO> responses = oracleQueryService.executeReadOnlyStatements(List.of(sql), TestcontainersConfiguration.ORACLE_CONNECTION_NAME, 1);
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertTrue(elapsed < 5000, "Timeout should have interrupted the query, but it took " + elapsed + "ms");
+        assertEquals(1, responses.size());
+        StatementResponseDTO response = responses.getFirst();
+        assertEquals(sql, response.getSql());
+        assertNull(response.getResponse());
+        assertNotNull(response.getError());
     }
 
     @Override

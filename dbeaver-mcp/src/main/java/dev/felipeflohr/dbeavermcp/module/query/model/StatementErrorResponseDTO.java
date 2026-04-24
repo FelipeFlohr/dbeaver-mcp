@@ -6,16 +6,12 @@ import lombok.NoArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-
 @NullMarked
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatementResponseDTO {
-    private String sql;
-    private @Nullable List<Map<String, @Nullable Object>> response;
-    private @Nullable StatementErrorResponseDTO error;
-    private long elapsedTimeInMillis;
+public class StatementErrorResponseDTO {
+    private String message;
+    private String stackTrace;
+    private @Nullable String hint;
 }

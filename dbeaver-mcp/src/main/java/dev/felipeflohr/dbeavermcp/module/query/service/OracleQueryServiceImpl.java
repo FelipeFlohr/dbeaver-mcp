@@ -7,7 +7,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import oracle.sql.*;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
 
 import javax.sql.DataSource;
 import java.io.ByteArrayOutputStream;
@@ -22,23 +24,26 @@ import java.sql.Timestamp;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @NullMarked
 @Service
 class OracleQueryServiceImpl extends GenericQueryServiceImpl {
-    public OracleQueryServiceImpl(ConnectionManager poolManager) {
-        super(poolManager);
+    public OracleQueryServiceImpl(ConnectionManager poolManager, ObjectMapper objectMapper) {
+        super(poolManager, objectMapper);
     }
 
     @Override
-    public List<StatementResponseDTO> executeReadOnlyStatements(List<String> statements, String connectionName) throws DBeaverMCPValidationException {
+    public List<StatementResponseDTO> executeReadOnlyStatements(List<String> statements, String connectionName, @Nullable Integer timeoutInSeconds) throws DBeaverMCPValidationException {
         if (statements.isEmpty()) return List.of();
         DataSource ds = poolManager.getDataSourceFromConnectionName(connectionName);
 
+        int timeout = Optional.ofNullable(timeoutInSeconds).orElse(30);
         try (Connection conn = ds.getConnection()) {
             try {
                 Statement statement = conn.createStatement();
+                statement.setQueryTimeout(timeout);
                 statement.execute("SET TRANSACTION READ ONLY");
                 List<StatementResponseDTO> responses = getStatementResponses(statements, statement);
                 responses.forEach(r -> parseRows(r.getResponse(), conn));
@@ -52,9 +57,10 @@ class OracleQueryServiceImpl extends GenericQueryServiceImpl {
     }
 
     @SneakyThrows
-    private void parseRows(List<Map<String, Object>> rows, Connection connection) {
-        for (Map<String, Object> row : rows) {
-            for (Map.Entry<String, Object> entry : row.entrySet()) {
+    private void parseRows(@Nullable List<Map<String, @Nullable Object>> rows, Connection connection) {
+        if (rows == null) return;
+        for (Map<String, @Nullable Object> row : rows) {
+            for (Map.Entry<String, @Nullable Object> entry : row.entrySet()) {
                 String columnName = entry.getKey();
                 Object value = entry.getValue();
                 if (value == null) continue;
@@ -72,6 +78,14 @@ class OracleQueryServiceImpl extends GenericQueryServiceImpl {
                 }
             }
         }
+    }
+
+    @Override
+    protected boolean errorIsAboutInvalidIdentifier(String errorMsg) {
+        boolean columnError = errorMsg.toLowerCase().contains("invalid identifier".toLowerCase());
+        boolean invalidTable = errorMsg.toLowerCase().contains("table or view".toLowerCase())
+                && errorMsg.toLowerCase().contains("does not exist".toLowerCase());
+        return columnError || invalidTable;
     }
 
     private String blobToBase64(BLOB blob) throws SQLException, IOException {
