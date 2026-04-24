@@ -11,6 +11,7 @@ import dev.felipeflohr.dbeavermcp.test.AssertionUtil;
 import dev.felipeflohr.dbeavermcp.test.TestcontainersConfiguration;
 import dev.felipeflohr.dbeavermcp.test.TestcontainersService;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @NullMarked
 @Import(TestcontainersConfiguration.class)
@@ -89,10 +91,11 @@ abstract class BaseQueryServiceTest {
     protected void assertParentAndChildTest(boolean isUppercase) throws DBeaverMCPValidationException, SQLException {
         QueryService service = queryServiceFactory.getFromConnectionName(getConnectionName());
         String parentSql = "SELECT * FROM parent_test_entity";
-        List<StatementResponseDTO> parentResponses = service.executeReadOnlyStatements(List.of(parentSql), getConnectionName());
+        List<StatementResponseDTO> parentResponses = service.executeReadOnlyStatements(List.of(parentSql), getConnectionName(), null);
         assertEquals(1, parentResponses.size());
         StatementResponseDTO parentResponse = parentResponses.getFirst();
         assertEquals(parentSql, parentResponse.getSql());
+        assertNotNull(parentResponse.getResponse());
         assertEquals(2, parentResponse.getResponse().size());
 
         final String idColumn = isUppercase ? "ID" : "id";
@@ -102,14 +105,14 @@ abstract class BaseQueryServiceTest {
         final String randomBooleanColumn = isUppercase ? "RANDOM_BOOLEAN" : "random_boolean";
         final String parentColumn = isUppercase ? "PARENT" : "parent";
 
-        Map<String, Object> firstParentRow = parentResponse.getResponse().getFirst();
+        Map<String, @Nullable Object> firstParentRow = parentResponse.getResponse().getFirst();
         AssertionUtil.assertNumber(1, firstParentRow.get(idColumn));
         assertEquals("xK9mPqL2vNwR7tYs", firstParentRow.get(randomStringColumn));
         AssertionUtil.assertDate(LocalDate.of(2024, 3, 15), firstParentRow.get(randomDateColumn));
         AssertionUtil.assertDateTime(LocalDateTime.of(2024, 3, 15, 14, 30, 45), firstParentRow.get(randomDateTimeColumn));
         AssertionUtil.assertTrue(firstParentRow.get(randomBooleanColumn));
 
-        Map<String, Object> secondParentRow = parentResponse.getResponse().getLast();
+        Map<String, @Nullable Object> secondParentRow = parentResponse.getResponse().getLast();
         AssertionUtil.assertNumber(2, secondParentRow.get(idColumn));
         assertEquals("bH4jFcA8eZuW1oMn", secondParentRow.get(randomStringColumn));
         AssertionUtil.assertDate(LocalDate.of(2024, 7, 22), secondParentRow.get(randomDateColumn));
@@ -117,28 +120,29 @@ abstract class BaseQueryServiceTest {
         AssertionUtil.assertFalse(secondParentRow.get(randomBooleanColumn));
 
         String childSql = "SELECT * FROM child_test_entity";
-        List<StatementResponseDTO> childResponses = service.executeReadOnlyStatements(List.of(childSql), getConnectionName());
+        List<StatementResponseDTO> childResponses = service.executeReadOnlyStatements(List.of(childSql), getConnectionName(), null);
         assertEquals(1, childResponses.size());
         StatementResponseDTO childResponse = childResponses.getFirst();
         assertEquals(childSql, childResponse.getSql());
+        assertNotNull(childResponse.getResponse());
         assertEquals(4, childResponse.getResponse().size());
 
-        Map<String, Object> firstChildRow = childResponse.getResponse().getFirst();
+        Map<String, @Nullable Object> firstChildRow = childResponse.getResponse().getFirst();
         AssertionUtil.assertNumber(1, firstChildRow.get(idColumn));
         assertEquals("qT6yRpD3sVxL9wKm", firstChildRow.get(randomStringColumn));
         AssertionUtil.assertNumber(1, firstChildRow.get(parentColumn));
 
-        Map<String, Object> secondChildRow = childResponse.getResponse().get(1);
+        Map<String, @Nullable Object> secondChildRow = childResponse.getResponse().get(1);
         AssertionUtil.assertNumber(2, secondChildRow.get(idColumn));
         assertEquals("nG2hJcB7fZuE4oAi", secondChildRow.get(randomStringColumn));
         AssertionUtil.assertNumber(1, secondChildRow.get(parentColumn));
 
-        Map<String, Object> thirdChildRow = childResponse.getResponse().get(2);
+        Map<String, @Nullable Object> thirdChildRow = childResponse.getResponse().get(2);
         AssertionUtil.assertNumber(3, thirdChildRow.get(idColumn));
         assertEquals("mW5kPtC1vNxQ8rYs", thirdChildRow.get(randomStringColumn));
         AssertionUtil.assertNumber(2, thirdChildRow.get(parentColumn));
 
-        Map<String, Object> fourthChildRow = childResponse.getResponse().getLast();
+        Map<String, @Nullable Object> fourthChildRow = childResponse.getResponse().getLast();
         AssertionUtil.assertNumber(4, fourthChildRow.get(idColumn));
         assertEquals("dL3jHbF9eZaU6oXn", fourthChildRow.get(randomStringColumn));
         AssertionUtil.assertNumber(2, fourthChildRow.get(parentColumn));

@@ -1,4 +1,4 @@
-package dev.felipeflohr.dbeavermcp.module.mcp.service;
+package dev.felipeflohr.dbeavermcp.module.entityparser.mcp;
 
 import dev.felipeflohr.dbeavermcp.module.entityparser.enumerator.NamingStrategy;
 import dev.felipeflohr.dbeavermcp.module.entityparser.model.ParsedEntityRecord;
@@ -17,10 +17,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Service
 public class EntityParserMCPService {
+    public static final String GET_TABLE_COLUMNS_FROM_JPA_ENTITY_TOOL_NAME = "get_table_columns_from_jpa_entity";
     private final EntityParserService entityParserService;
 
     @McpTool(
-            name = "get_table_columns_from_jpa_entity",
+            name = GET_TABLE_COLUMNS_FROM_JPA_ENTITY_TOOL_NAME,
             description = "Parses a Java JPA entity source file and extracts its database table name and column mappings. " +
                     "This tool ONLY works with Java projects using JPA/Hibernate annotations. " +
                     "Provide the absolute file path to a .java file containing a class annotated with @Entity. " +

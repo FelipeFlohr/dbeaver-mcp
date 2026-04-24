@@ -2,6 +2,7 @@ package dev.felipeflohr.dbeavermcp.test;
 
 import oracle.sql.TIMESTAMP;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.Assertions;
 
 import java.math.BigDecimal;
@@ -17,7 +18,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AssertionUtil {
     private AssertionUtil() {}
 
-    public static void assertNumber(int expected, Object actual) {
+    public static void assertNumber(int expected, @Nullable Object actual) {
+        if (actual == null) throw new AssertionError("actual is null");
         switch (actual) {
             case BigDecimal bigDecimal -> assertEquals(BigDecimal.valueOf(expected, bigDecimal.scale()), bigDecimal);
             case Integer integer -> assertEquals(expected, integer);
@@ -26,7 +28,8 @@ public class AssertionUtil {
         }
     }
 
-    public static void assertDate(LocalDate expected, Object actual) {
+    public static void assertDate(LocalDate expected, @Nullable Object actual) {
+        if (actual == null) throw new AssertionError("actual is null");
         switch (actual) {
             case LocalDate localDate -> assertEquals(expected, localDate);
             case Date date -> assertEquals(expected, date.toLocalDate());
@@ -36,7 +39,8 @@ public class AssertionUtil {
         }
     }
 
-    public static void assertDateTime(LocalDateTime expected, Object actual) throws SQLException {
+    public static void assertDateTime(LocalDateTime expected, @Nullable Object actual) throws SQLException {
+        if (actual == null) throw new AssertionError("actual is null");
         switch (actual) {
             case LocalDateTime localDateTime -> assertEquals(expected, localDateTime);
             case Timestamp sqlTimestamp -> assertEquals(expected, sqlTimestamp.toLocalDateTime());
@@ -45,15 +49,16 @@ public class AssertionUtil {
         }
     }
 
-    public static void assertTrue(Object actual) {
+    public static void assertTrue(@Nullable Object actual) {
         assertBoolean(true, actual);
     }
 
-    public static void assertFalse(Object actual) {
+    public static void assertFalse(@Nullable Object actual) {
         assertBoolean(false, actual);
     }
 
-    private static void assertBoolean(boolean expected, Object actual) {
+    private static void assertBoolean(boolean expected, @Nullable Object actual) {
+        if (actual == null) throw new AssertionError("actual is null");
         switch (actual) {
             case Boolean booleanValue -> assertEquals(expected, booleanValue);
             case BigDecimal bigDecimal -> {

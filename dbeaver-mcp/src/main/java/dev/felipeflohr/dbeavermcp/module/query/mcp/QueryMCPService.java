@@ -1,4 +1,4 @@
-package dev.felipeflohr.dbeavermcp.module.mcp.service;
+package dev.felipeflohr.dbeavermcp.module.query.mcp;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import dev.felipeflohr.dbeavermcp.module.query.factory.QueryServiceFactory;
@@ -48,11 +48,14 @@ public class QueryMCPService {
             String connectionName,
 
             @McpToolParam(description = "List of SQL statements to execute (SELECT-like queries only)")
-            List<String> statements
+            List<String> statements,
+
+            @McpToolParam(description = "The timeout in seconds of the statements. Default is 30", required = false)
+            Integer timeoutInSeconds
     ) throws Exception {
         try {
             QueryService queryService = queryServiceFactory.getFromConnectionName(connectionName);
-            return queryService.executeReadOnlyStatements(statements, connectionName);
+            return queryService.executeReadOnlyStatements(statements, connectionName, timeoutInSeconds);
         } catch (Exception e) {
             throw handleException(e);
         }
