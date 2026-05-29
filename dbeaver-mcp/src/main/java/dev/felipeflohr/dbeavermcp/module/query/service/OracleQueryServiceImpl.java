@@ -30,6 +30,8 @@ import java.util.Optional;
 @NullMarked
 @Service
 class OracleQueryServiceImpl extends GenericQueryServiceImpl {
+    private static final String TABLE_OR_COLUMN_UNKNOWN_ERROR = "42000";
+
     public OracleQueryServiceImpl(ConnectionManager poolManager, ObjectMapper objectMapper) {
         super(poolManager, objectMapper);
     }
@@ -81,11 +83,9 @@ class OracleQueryServiceImpl extends GenericQueryServiceImpl {
     }
 
     @Override
-    protected boolean errorIsAboutInvalidIdentifier(String errorMsg) {
-        boolean columnError = errorMsg.toLowerCase().contains("invalid identifier".toLowerCase());
-        boolean invalidTable = errorMsg.toLowerCase().contains("table or view".toLowerCase())
-                && errorMsg.toLowerCase().contains("does not exist".toLowerCase());
-        return columnError || invalidTable;
+    protected boolean errorIsAboutInvalidIdentifier(SQLException ex) {
+        final String errorCode = ex.getSQLState();
+        return errorCode.toLowerCase().contains(TABLE_OR_COLUMN_UNKNOWN_ERROR.toLowerCase());
     }
 
     private String blobToBase64(BLOB blob) throws SQLException, IOException {

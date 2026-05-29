@@ -5,17 +5,22 @@ import org.jspecify.annotations.NullMarked;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
+import java.sql.SQLException;
+
 @NullMarked
 @Service
 class PostgresQueryServiceImpl extends GenericQueryServiceImpl {
+    private static final String TABLE_UNKNOWN_ERROR = "42P01";
+    private static final String COLUMN_UNKNOWN_ERROR = "42703";
+
     public PostgresQueryServiceImpl(ConnectionManager poolManager, ObjectMapper objectMapper) {
         super(poolManager, objectMapper);
     }
 
     @Override
-    protected boolean errorIsAboutInvalidIdentifier(String errorMsg) {
-        boolean missingColumn = errorMsg.toLowerCase().contains("column") && errorMsg.toLowerCase().contains("does not exist");
-        boolean missingTable = errorMsg.toLowerCase().contains("relation") && errorMsg.toLowerCase().contains("does not exist");
-        return missingColumn || missingTable;
+    protected boolean errorIsAboutInvalidIdentifier(SQLException ex) {
+        final String errorCode = ex.getSQLState();
+        return errorCode.toLowerCase().contains(TABLE_UNKNOWN_ERROR.toLowerCase())
+                || errorCode.toLowerCase().contains(COLUMN_UNKNOWN_ERROR.toLowerCase());
     }
 }
