@@ -120,14 +120,14 @@ abstract class GenericQueryServiceImpl implements QueryService {
         return responses;
     }
 
-    protected abstract boolean errorIsAboutInvalidIdentifier(String errorMsg);
+    protected abstract boolean errorIsAboutInvalidIdentifier(SQLException ex);
 
     private StatementResponseDTO createResponseFromError(String sql, SQLException e, long startMillis) {
         long finishMillis = System.currentTimeMillis();
         log.error("Cannot convert result set to proper response", e);
 
         String hint = null;
-        if (errorIsAboutInvalidIdentifier(e.getMessage())) {
+        if (errorIsAboutInvalidIdentifier(e)) {
             hint = "You have an invalid identifier in your SQL. To avoid expend unnecessary tokens and time, try " +
                     "using the \"%s\" MCP tool.".formatted(EntityParserMCPService.GET_TABLE_COLUMNS_FROM_JPA_ENTITY_TOOL_NAME);
         }
