@@ -1,10 +1,10 @@
 package dev.felipeflohr.dbeavermcp.test;
 
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.auth.DBeaverAuthConnectionDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.auth.DBeaverAuthConnectionDataDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverDataSourcesDTO;
+import dev.felipeflohr.dbeaverconfig.data.auth.DBeaverAuthConnection;
+import dev.felipeflohr.dbeaverconfig.data.auth.DBeaverAuthConnectionData;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnection;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfiguration;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverDataSources;
 import org.firebirdsql.testcontainers.FirebirdContainer;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -26,69 +26,55 @@ public class TestcontainersConfiguration {
     public static final String FIREBIRD_CONNECTION_NAME = "Firebird connection";
 
     @Bean
-    DBeaverAuthConnectionDataDTO oracleAuthConnectionData(OracleContainer oracleContainer) {
-        return DBeaverAuthConnectionDataDTO.builder()
-                .connection(DBeaverAuthConnectionDTO.builder()
-                        .user(oracleContainer.getUsername())
-                        .password(oracleContainer.getPassword())
-                        .build())
-                .build();
+    DBeaverAuthConnectionData oracleAuthConnectionData(OracleContainer oracleContainer) {
+        return authConnectionData(oracleContainer.getUsername(), oracleContainer.getPassword());
     }
 
     @Bean
-    DBeaverAuthConnectionDataDTO postgresAuthConnectionData(PostgreSQLContainer postgresContainer) {
-        return DBeaverAuthConnectionDataDTO.builder()
-                .connection(DBeaverAuthConnectionDTO.builder()
-                        .user(postgresContainer.getUsername())
-                        .password(postgresContainer.getPassword())
-                        .build())
-                .build();
+    DBeaverAuthConnectionData postgresAuthConnectionData(PostgreSQLContainer postgresContainer) {
+        return authConnectionData(postgresContainer.getUsername(), postgresContainer.getPassword());
     }
 
     @Bean
-    DBeaverAuthConnectionDataDTO firebirdAuthConnectionData(FirebirdContainer<?> firebirdContainer) {
-        return DBeaverAuthConnectionDataDTO.builder()
-                .connection(DBeaverAuthConnectionDTO.builder()
-                        .user(firebirdContainer.getUsername())
-                        .password(firebirdContainer.getPassword())
-                        .build())
-                .build();
+    DBeaverAuthConnectionData firebirdAuthConnectionData(FirebirdContainer<?> firebirdContainer) {
+        return authConnectionData(firebirdContainer.getUsername(), firebirdContainer.getPassword());
     }
 
     @Bean
-    DBeaverDataSourcesDTO dataSources(OracleContainer oracleContainer, PostgreSQLContainer postgresContainer, FirebirdContainer<?> firebirdContainer) {
-        DBeaverConnectionDTO oracleConnection = DBeaverConnectionDTO.builder()
-                .name(ORACLE_CONNECTION_NAME)
-                .provider("oracle")
-                .driver("oracle_thin")
-                .configuration(DBeaverConnectionConfigurationDTO.builder()
-                        .url(oracleContainer.getJdbcUrl())
-                        .build())
-                .build();
-        DBeaverConnectionDTO postgresConnection = DBeaverConnectionDTO.builder()
-                .name(POSTGRES_CONNECTION_NAME)
-                .provider("postgresql")
-                .driver("postgres-jdbc")
-                .configuration(DBeaverConnectionConfigurationDTO.builder()
-                        .url(postgresContainer.getJdbcUrl())
-                        .build())
-                .build();
-        DBeaverConnectionDTO firebirdConnection = DBeaverConnectionDTO.builder()
-                .name(FIREBIRD_CONNECTION_NAME)
-                .provider("jaybird")
-                .driver("jaybird")
-                .configuration(DBeaverConnectionConfigurationDTO.builder()
-                        .url(firebirdContainer.getJdbcUrl())
-                        .build())
-                .build();
-        Map<String, DBeaverConnectionDTO> connections = Map.of(
+    DBeaverDataSources dataSources(OracleContainer oracleContainer, PostgreSQLContainer postgresContainer, FirebirdContainer<?> firebirdContainer) {
+        DBeaverConnection oracleConnection = connection(ORACLE_CONNECTION_NAME, "oracle", "oracle_thin", oracleContainer.getJdbcUrl());
+        DBeaverConnection postgresConnection = connection(POSTGRES_CONNECTION_NAME, "postgresql", "postgres-jdbc", postgresContainer.getJdbcUrl());
+        DBeaverConnection firebirdConnection = connection(FIREBIRD_CONNECTION_NAME, "jaybird", "jaybird", firebirdContainer.getJdbcUrl());
+
+        DBeaverDataSources dataSources = new DBeaverDataSources();
+        dataSources.setConnections(Map.of(
                 ORACLE_IDENTIFIER, oracleConnection,
                 POSTGRES_IDENTIFIER, postgresConnection,
                 FIREBIRD_IDENTIFIER, firebirdConnection
-        );
-        return DBeaverDataSourcesDTO.builder()
-                .connections(connections)
-                .build();
+        ));
+        return dataSources;
+    }
+
+    private static DBeaverAuthConnectionData authConnectionData(String user, String password) {
+        DBeaverAuthConnection connection = new DBeaverAuthConnection();
+        connection.setUser(user);
+        connection.setPassword(password);
+
+        DBeaverAuthConnectionData authConnectionData = new DBeaverAuthConnectionData();
+        authConnectionData.setConnection(connection);
+        return authConnectionData;
+    }
+
+    private static DBeaverConnection connection(String name, String provider, String driver, String jdbcUrl) {
+        DBeaverConnectionConfiguration configuration = new DBeaverConnectionConfiguration();
+        configuration.setUrl(jdbcUrl);
+
+        DBeaverConnection connection = new DBeaverConnection();
+        connection.setName(name);
+        connection.setProvider(provider);
+        connection.setDriver(driver);
+        connection.setConfiguration(configuration);
+        return connection;
     }
 
     @Bean

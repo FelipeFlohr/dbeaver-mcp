@@ -8,6 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      packages: read
+
     steps:
       - uses: actions/checkout@v6
 
@@ -20,3 +24,6 @@ jobs:
 
       - run: ./gradlew test
         working-directory: dbeaver-mcp
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -10,6 +10,7 @@ jobs:
 
     permissions:
       contents: write
+      packages: read
 
     steps:
       - uses: actions/checkout@v6
@@ -23,6 +24,9 @@ jobs:
 
       - run: ./gradlew bootJar
         working-directory: dbeaver-mcp
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Package Linux artifact
         run: |
