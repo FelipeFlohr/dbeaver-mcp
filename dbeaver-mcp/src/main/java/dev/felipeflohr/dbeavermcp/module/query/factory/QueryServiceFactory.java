@@ -2,9 +2,9 @@ package dev.felipeflohr.dbeavermcp.module.query.factory;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionManager;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationHandlersDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationSSHTunnelHandlerDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationSSHTunnelPropertiesDTO;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfigurationHandlers;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfigurationSSHTunnelHandler;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfigurationSSHTunnelProperties;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverDataSourceService;
 import dev.felipeflohr.dbeavermcp.module.query.model.AvailableConnectionDTO;
 import dev.felipeflohr.dbeavermcp.module.query.service.QueryService;
@@ -39,9 +39,9 @@ public class QueryServiceFactory {
     public List<AvailableConnectionDTO> getAllAvailableConnections() throws DBeaverMCPValidationException {
         return dBeaverDataSourceService.getDataSources().getConnections().entrySet().stream()
                 .filter(e -> {
-                    DBeaverConnectionConfigurationSSHTunnelPropertiesDTO sshProperties = Optional.ofNullable(e.getValue().getConfiguration().getHandlers())
-                            .map(DBeaverConnectionConfigurationHandlersDTO::getSshTunnel)
-                            .map(DBeaverConnectionConfigurationSSHTunnelHandlerDTO::getProperties)
+                    DBeaverConnectionConfigurationSSHTunnelProperties sshProperties = Optional.ofNullable(e.getValue().getConfiguration().getHandlers())
+                            .map(DBeaverConnectionConfigurationHandlers::getSshTunnel)
+                            .map(DBeaverConnectionConfigurationSSHTunnelHandler::getProperties)
                             .orElse(null);
                     if (sshProperties == null) return true;
                     if (!SSH_AUTH_TYPE.equals(sshProperties.getAuthType())) {
@@ -53,8 +53,8 @@ public class QueryServiceFactory {
                 .map(e -> {
                     String sshHost = null;
                     Integer sshPort = null;
-                    DBeaverConnectionConfigurationSSHTunnelHandlerDTO sshTunnelHandler = Optional.ofNullable(e.getValue().getConfiguration().getHandlers())
-                            .map(DBeaverConnectionConfigurationHandlersDTO::getSshTunnel)
+                    DBeaverConnectionConfigurationSSHTunnelHandler sshTunnelHandler = Optional.ofNullable(e.getValue().getConfiguration().getHandlers())
+                            .map(DBeaverConnectionConfigurationHandlers::getSshTunnel)
                             .orElse(null);
                     if (sshTunnelHandler != null) {
                         sshHost = sshTunnelHandler.getProperties().getHost();

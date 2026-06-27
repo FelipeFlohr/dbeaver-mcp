@@ -1,8 +1,8 @@
 package dev.felipeflohr.dbeavermcp.test;
 
+import dev.felipeflohr.dbeaverconfig.data.auth.DBeaverAuthConnectionData;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverDataSources;
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.auth.DBeaverAuthConnectionDataDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverDataSourcesDTO;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverCipherService;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverDataSourceService;
 import org.firebirdsql.testcontainers.FirebirdContainer;
@@ -30,12 +30,12 @@ public class TestcontainersService {
     private final PostgreSQLContainer postgresContainer;
     private final OracleContainer oracleContainer;
     private final FirebirdContainer<?> firebirdContainer;
-    private final DBeaverDataSourcesDTO dataSources;
-    private final DBeaverAuthConnectionDataDTO oracleAuthConnectionData;
-    private final DBeaverAuthConnectionDataDTO postgresAuthConnectionData;
-    private final DBeaverAuthConnectionDataDTO firebirdAuthConnectionData;
+    private final DBeaverDataSources dataSources;
+    private final DBeaverAuthConnectionData oracleAuthConnectionData;
+    private final DBeaverAuthConnectionData postgresAuthConnectionData;
+    private final DBeaverAuthConnectionData firebirdAuthConnectionData;
 
-    public TestcontainersService(PostgreSQLContainer postgresContainer, OracleContainer oracleContainer, FirebirdContainer<?> firebirdContainer, DBeaverDataSourcesDTO dataSources, DBeaverAuthConnectionDataDTO oracleAuthConnectionData, DBeaverAuthConnectionDataDTO postgresAuthConnectionData, DBeaverAuthConnectionDataDTO firebirdAuthConnectionData) {
+    public TestcontainersService(PostgreSQLContainer postgresContainer, OracleContainer oracleContainer, FirebirdContainer<?> firebirdContainer, DBeaverDataSources dataSources, DBeaverAuthConnectionData oracleAuthConnectionData, DBeaverAuthConnectionData postgresAuthConnectionData, DBeaverAuthConnectionData firebirdAuthConnectionData) {
         this.postgresContainer = postgresContainer;
         this.oracleContainer = oracleContainer;
         this.firebirdContainer = firebirdContainer;

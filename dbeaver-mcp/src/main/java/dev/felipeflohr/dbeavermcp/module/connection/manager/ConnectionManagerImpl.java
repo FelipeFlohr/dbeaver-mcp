@@ -3,12 +3,12 @@ package dev.felipeflohr.dbeavermcp.module.connection.manager;
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import dev.felipeflohr.dbeavermcp.module.connection.datasource.DBeaverMCPDatasource;
 import dev.felipeflohr.dbeavermcp.module.connection.enumeration.DatabaseType;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.auth.DBeaverAuthConnectionDataDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.auth.DBeaverAuthSSHTunnelDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationHandlersDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionConfigurationSSHTunnelPropertiesDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverConnectionDTO;
-import dev.felipeflohr.dbeavermcp.module.dbeaver.model.datasources.DBeaverDataSourcesDTO;
+import dev.felipeflohr.dbeaverconfig.data.auth.DBeaverAuthConnectionData;
+import dev.felipeflohr.dbeaverconfig.data.auth.DBeaverAuthSSHTunnel;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnection;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfigurationHandlers;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfigurationSSHTunnelProperties;
+import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverDataSources;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverCipherService;
 import dev.felipeflohr.dbeavermcp.module.dbeaver.service.DBeaverDataSourceService;
 import dev.felipeflohr.dbeavermcp.module.ssh.manager.SSHTunnelManager;
@@ -35,11 +35,11 @@ class ConnectionManagerImpl implements ConnectionManager {
     @Override
     public DataSource getDataSourceFromConnectionName(String connectionName) throws DBeaverMCPValidationException {
         String connectionIdentifier = getIdentifierFromConnectionName(connectionName);
-        Map<String, DBeaverAuthConnectionDataDTO> connectionsAuth = dBeaverCipherService.getConnectionsAuthentication();
-        DBeaverAuthConnectionDataDTO authData = connectionsAuth.get(connectionIdentifier);
+        Map<String, DBeaverAuthConnectionData> connectionsAuth = dBeaverCipherService.getConnectionsAuthentication();
+        DBeaverAuthConnectionData authData = connectionsAuth.get(connectionIdentifier);
         if (authData == null) throw new DBeaverMCPValidationException("Authentication data not found for connection %s.".formatted(connectionName));
 
-        DBeaverConnectionDTO connectionData = dBeaverDataSourceService.getDataSources().getConnections().get(connectionIdentifier);
+        DBeaverConnection connectionData = dBeaverDataSourceService.getDataSources().getConnections().get(connectionIdentifier);
         String provider = connectionData.getProvider();
         String jdbcUrl = connectionData.getConfiguration().getUrl();
         String username = authData.getConnection().getUser();
@@ -68,7 +68,7 @@ class ConnectionManagerImpl implements ConnectionManager {
 
 
     private String getIdentifierFromConnectionName(String connectionName) throws DBeaverMCPValidationException {
-        DBeaverDataSourcesDTO dataSources = dBeaverDataSourceService.getDataSources();
+        DBeaverDataSources dataSources = dBeaverDataSourceService.getDataSources();
         Optional<String> connectionIdentifierOpt = dataSources.getConnections().entrySet().stream()
                 .filter(e -> e.getValue().getName().equals(connectionName))
                 .map(Map.Entry::getKey)
@@ -79,11 +79,11 @@ class ConnectionManagerImpl implements ConnectionManager {
 
     private String applySSHTunnelIfNeeded(
             String connectionId,
-            DBeaverConnectionDTO connectionData,
-            DBeaverAuthConnectionDataDTO authData,
+            DBeaverConnection connectionData,
+            DBeaverAuthConnectionData authData,
             String jdbcUrl
     ) throws DBeaverMCPValidationException {
-        DBeaverConnectionConfigurationHandlersDTO handlers = connectionData.getConfiguration().getHandlers();
+        DBeaverConnectionConfigurationHandlers handlers = connectionData.getConfiguration().getHandlers();
         if (handlers == null || handlers.getSshTunnel() == null || !handlers.getSshTunnel().isEnabled()) {
             return jdbcUrl;
         }
@@ -91,8 +91,8 @@ class ConnectionManagerImpl implements ConnectionManager {
             throw new DBeaverMCPValidationException("SSH tunnel is enabled but no SSH credentials were found for connection %s".formatted(connectionData.getName()));
         }
 
-        DBeaverConnectionConfigurationSSHTunnelPropertiesDTO sshProps = handlers.getSshTunnel().getProperties();
-        DBeaverAuthSSHTunnelDTO sshAuth = authData.getSshTunnel();
+        DBeaverConnectionConfigurationSSHTunnelProperties sshProps = handlers.getSshTunnel().getProperties();
+        DBeaverAuthSSHTunnel sshAuth = authData.getSshTunnel();
         JdbcUrlUtils.JdbcUrlParts jdbcUrlParts = JdbcUrlUtils.extractJdbcUrlParts(jdbcUrl);
         int localPort = sshTunnelManager.openTunnel(
                 connectionId,

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'dev.felipeflohr'
-version = '0.3.0'
+version = '0.4.0'
 description = 'dbeaver-mcp'
 
 java {
@@ -21,17 +21,28 @@ configurations {
 }
 
 repositories {
+    mavenLocal()
+    maven {
+        url = uri('https://maven.pkg.github.com/FelipeFlohr/dbeaver-config')
+        credentials {
+            username = System.getenv('GITHUB_ACTOR') ?: findProperty('gpr.user')
+            password = System.getenv('GITHUB_TOKEN') ?: findProperty('gpr.token')
+        }
+    }
     mavenCentral()
 }
 
 ext {
     set('springAiVersion', "2.0.0-M2")
+    set('dbeaverConfigVersion', "1.0.0")
 }
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-jdbc'
     implementation 'org.springframework.ai:spring-ai-starter-mcp-server-webmvc'
+    implementation "dev.felipeflohr:dbeaver-config-api:${property('dbeaverConfigVersion')}"
+    implementation "dev.felipeflohr:dbeaver-config-core:${property('dbeaverConfigVersion')}"
     implementation 'com.github.mwiede:jsch:2.27.7'
     implementation 'com.github.javaparser:javaparser-core:3.28.0'
     implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.28.0'
