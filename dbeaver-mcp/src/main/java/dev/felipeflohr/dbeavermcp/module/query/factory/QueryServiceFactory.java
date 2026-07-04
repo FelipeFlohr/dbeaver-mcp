@@ -1,6 +1,7 @@
 package dev.felipeflohr.dbeavermcp.module.query.factory;
 
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
+import dev.felipeflohr.dbeavermcp.module.connection.filter.ConnectionFilter;
 import dev.felipeflohr.dbeavermcp.module.connection.manager.ConnectionManager;
 import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfigurationHandlers;
 import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnectionConfigurationSSHTunnelHandler;
@@ -27,6 +28,7 @@ public class QueryServiceFactory {
     private final QueryService firebirdQueryServiceImpl;
     private final ConnectionManager connectionManager;
     private final DBeaverDataSourceService dBeaverDataSourceService;
+    private final ConnectionFilter connectionFilter;
 
     public QueryService getFromConnectionName(String connectionName) throws DBeaverMCPValidationException {
         return switch (connectionManager.getDatabaseTypeFromConnectionName(connectionName)) {
@@ -38,6 +40,7 @@ public class QueryServiceFactory {
 
     public List<AvailableConnectionDTO> getAllAvailableConnections() throws DBeaverMCPValidationException {
         return dBeaverDataSourceService.getDataSources().getConnections().entrySet().stream()
+                .filter(e -> connectionFilter.isAllowed(e.getValue().getName()))
                 .filter(e -> {
                     DBeaverConnectionConfigurationSSHTunnelProperties sshProperties = Optional.ofNullable(e.getValue().getConfiguration().getHandlers())
                             .map(DBeaverConnectionConfigurationHandlers::getSshTunnel)
