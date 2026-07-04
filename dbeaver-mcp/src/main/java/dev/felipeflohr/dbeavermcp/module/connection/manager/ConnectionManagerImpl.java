@@ -3,6 +3,7 @@ package dev.felipeflohr.dbeavermcp.module.connection.manager;
 import dev.felipeflohr.dbeavermcp.exception.DBeaverMCPValidationException;
 import dev.felipeflohr.dbeavermcp.module.connection.datasource.DBeaverMCPDatasource;
 import dev.felipeflohr.dbeavermcp.module.connection.enumeration.DatabaseType;
+import dev.felipeflohr.dbeavermcp.module.connection.filter.ConnectionFilter;
 import dev.felipeflohr.dbeaverconfig.data.auth.DBeaverAuthConnectionData;
 import dev.felipeflohr.dbeaverconfig.data.auth.DBeaverAuthSSHTunnel;
 import dev.felipeflohr.dbeaverconfig.data.datasource.DBeaverConnection;
@@ -31,6 +32,7 @@ class ConnectionManagerImpl implements ConnectionManager {
     private final DBeaverDataSourceService dBeaverDataSourceService;
     private final DBeaverCipherService dBeaverCipherService;
     private final SSHTunnelManager sshTunnelManager;
+    private final ConnectionFilter connectionFilter;
 
     @Override
     public DataSource getDataSourceFromConnectionName(String connectionName) throws DBeaverMCPValidationException {
@@ -68,6 +70,9 @@ class ConnectionManagerImpl implements ConnectionManager {
 
 
     private String getIdentifierFromConnectionName(String connectionName) throws DBeaverMCPValidationException {
+        if (!connectionFilter.isAllowed(connectionName)) {
+            throw new DBeaverMCPValidationException("Connection \"%s\" is not accessible from this MCP instance (filtered by dbeavermcp.connections).".formatted(connectionName));
+        }
         DBeaverDataSources dataSources = dBeaverDataSourceService.getDataSources();
         Optional<String> connectionIdentifierOpt = dataSources.getConnections().entrySet().stream()
                 .filter(e -> e.getValue().getName().equals(connectionName))
