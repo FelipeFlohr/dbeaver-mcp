@@ -11,6 +11,7 @@ Built with Spring Boot and Spring AI. Communicates via STDIO.
 | PostgreSQL | Any version   | org.postgresql |
 | Oracle     | 11+           | ojdbc11        |
 | Firebird   | 2.5+          | Jaybird 6      |
+| MySQL      | 5.7+          | MySQL Connector/J 8 |
 
 ## Limitations
 

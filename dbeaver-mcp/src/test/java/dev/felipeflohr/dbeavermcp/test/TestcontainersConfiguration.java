@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
 import org.testcontainers.oracle.OracleContainer;
+import org.testcontainers.mysql.MySQLContainer;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -20,10 +21,12 @@ public class TestcontainersConfiguration {
     public static final String ORACLE_IDENTIFIER = "oracle";
     public static final String POSTGRES_IDENTIFIER = "postgres";
     public static final String FIREBIRD_IDENTIFIER = "firebird";
+    public static final String MYSQL_IDENTIFIER = "mysql";
 
     public static final String ORACLE_CONNECTION_NAME = "Oracle connection";
     public static final String POSTGRES_CONNECTION_NAME = "Postgres connection";
     public static final String FIREBIRD_CONNECTION_NAME = "Firebird connection";
+    public static final String MYSQL_CONNECTION_NAME = "MySQL connection";
 
     @Bean
     DBeaverAuthConnectionData oracleAuthConnectionData(OracleContainer oracleContainer) {
@@ -41,16 +44,23 @@ public class TestcontainersConfiguration {
     }
 
     @Bean
-    DBeaverDataSources dataSources(OracleContainer oracleContainer, PostgreSQLContainer postgresContainer, FirebirdContainer<?> firebirdContainer) {
+    DBeaverAuthConnectionData mysqlAuthConnectionData(MySQLContainer mysqlContainer) {
+        return authConnectionData(mysqlContainer.getUsername(), mysqlContainer.getPassword());
+    }
+
+    @Bean
+    DBeaverDataSources dataSources(OracleContainer oracleContainer, PostgreSQLContainer postgresContainer, FirebirdContainer<?> firebirdContainer, MySQLContainer mysqlContainer) {
         DBeaverConnection oracleConnection = connection(ORACLE_CONNECTION_NAME, "oracle", "oracle_thin", oracleContainer.getJdbcUrl());
         DBeaverConnection postgresConnection = connection(POSTGRES_CONNECTION_NAME, "postgresql", "postgres-jdbc", postgresContainer.getJdbcUrl());
         DBeaverConnection firebirdConnection = connection(FIREBIRD_CONNECTION_NAME, "jaybird", "jaybird", firebirdContainer.getJdbcUrl());
+        DBeaverConnection mysqlConnection = connection(MYSQL_CONNECTION_NAME, "mysql", "mysql", mysqlContainer.getJdbcUrl());
 
         DBeaverDataSources dataSources = new DBeaverDataSources();
         dataSources.setConnections(Map.of(
                 ORACLE_IDENTIFIER, oracleConnection,
                 POSTGRES_IDENTIFIER, postgresConnection,
-                FIREBIRD_IDENTIFIER, firebirdConnection
+                FIREBIRD_IDENTIFIER, firebirdConnection,
+                MYSQL_IDENTIFIER, mysqlConnection
         ));
         return dataSources;
     }
@@ -93,5 +103,11 @@ public class TestcontainersConfiguration {
     @ServiceConnection
     FirebirdContainer<?> firebirdContainer() {
         return new FirebirdContainer<>(DockerImageName.parse(FirebirdContainer.IMAGE).withTag("5.0.3"));
+    }
+
+    @Bean
+    @ServiceConnection
+    MySQLContainer mysqlContainer() {
+        return new MySQLContainer(DockerImageName.parse("mysql").withTag("8.4"));
     }
 }

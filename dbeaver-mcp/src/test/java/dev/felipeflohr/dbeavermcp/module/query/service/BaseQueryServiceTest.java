@@ -59,6 +59,9 @@ abstract class BaseQueryServiceTest {
     @Value("classpath:scripts/parent-and-child-test-firebird.sql")
     private Resource parentAndChildTestFirebirdScript;
 
+    @Value("classpath:scripts/parent-and-child-test-mysql.sql")
+    private Resource parentAndChildTestMysqlScript;
+
     @BeforeEach
     void beforeEach() throws DBeaverMCPValidationException {
         testcontainersService.mockDBeaverConnections(mockedDBeaverDataSourceService, mockedDBeaverCipherService);
@@ -76,6 +79,9 @@ abstract class BaseQueryServiceTest {
                 break;
             case FIREBIRD:
                 testcontainersService.clearFirebirdContainer();
+                break;
+            case MYSQL:
+                testcontainersService.clearMysqlContainer();
                 break;
         }
     }
@@ -159,6 +165,9 @@ abstract class BaseQueryServiceTest {
                 break;
             case FIREBIRD:
                 testcontainersService.executeFirebirdScript(parentAndChildTestFirebirdScript);
+                break;
+            case MYSQL:
+                testcontainersService.executeMysqlScript(parentAndChildTestMysqlScript);
                 break;
         }
     }
