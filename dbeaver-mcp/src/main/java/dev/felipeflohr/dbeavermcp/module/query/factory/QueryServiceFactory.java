@@ -25,6 +25,7 @@ public class QueryServiceFactory {
     private final QueryService postgresQueryServiceImpl;
     private final QueryService oracleQueryServiceImpl;
     private final QueryService firebirdQueryServiceImpl;
+    private final QueryService mysqlQueryServiceImpl;
     private final ConnectionManager connectionManager;
     private final DBeaverDataSourceService dBeaverDataSourceService;
 
@@ -33,6 +34,7 @@ public class QueryServiceFactory {
             case POSTGRES -> postgresQueryServiceImpl;
             case ORACLE -> oracleQueryServiceImpl;
             case FIREBIRD -> firebirdQueryServiceImpl;
+            case MYSQL -> mysqlQueryServiceImpl;
         };
     }
 

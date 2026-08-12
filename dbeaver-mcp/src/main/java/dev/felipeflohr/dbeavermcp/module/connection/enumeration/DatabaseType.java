@@ -13,7 +13,8 @@ import java.util.Optional;
 public enum DatabaseType {
     POSTGRES("postgresql", "org.postgresql.Driver"),
     ORACLE("oracle", "oracle.jdbc.OracleDriver"),
-    FIREBIRD("jaybird", "org.firebirdsql.jdbc.FBDriver");
+    FIREBIRD("jaybird", "org.firebirdsql.jdbc.FBDriver"),
+    MYSQL("mysql", "com.mysql.cj.jdbc.Driver");
 
     private final String provider;
     private final String driverClassName;
